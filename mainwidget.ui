@@ -223,60 +223,6 @@ QPushButton:pressed {
               </property>
              </spacer>
             </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <item>
-               <widget class="QLabel" name="label">
-                <property name="text">
-                 <string>AUX 1 (3.3/5V):</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="aux1Amps">
-                <property name="frameShape">
-                 <enum>QFrame::Box</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>0,0 A</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <widget class="QLabel" name="label_2">
-                <property name="text">
-                 <string>AUX 2 (12V):</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="aux2Amps">
-                <property name="frameShape">
-                 <enum>QFrame::Box</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Sunken</enum>
-                </property>
-                <property name="text">
-                 <string>0,0 A</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
            </layout>
           </item>
           <item>
