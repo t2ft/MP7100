@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="85.443039mm"
+   height="40.251274mm"
+   viewBox="0 0 85.443039 40.251274"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   sodipodi:docname="power_on.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#000000"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="3.659624"
+     inkscape:cx="254.94422"
+     inkscape:cy="-92.495841"
+     inkscape:window-width="3390"
+     inkscape:window-height="2076"
+     inkscape:window-x="3315"
+     inkscape:window-y="6"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     showguides="true">
+    <sodipodi:guide
+       position="72.676725,2.4999988"
+       orientation="1,0"
+       id="guide1083"
+       inkscape:locked="false" />
+    <sodipodi:guide
+       position="82.943036,12.76631"
+       orientation="0,1"
+       id="guide1085"
+       inkscape:locked="false" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-20.056962,-35.992632)">
+    <circle
+       style="fill:none;stroke:#ffffff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       id="path234"
+       cx="32.823273"
+       cy="63.477596"
+       r="10.266311" />
+    <circle
+       style="fill:none;stroke:#ffffff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none"
+       id="circle1002"
+       cx="92.733688"
+       cy="63.477596"
+       r="10.266311" />
+    <path
+       style="fill:none;stroke:#ffffff;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+       d="M 82.587384,63.376502 43.089086,63.578691"
+       id="path1067"
+       inkscape:transform-center-x="29.88827"
+       inkscape:transform-center-y="0.0056657666" />
+  </g>
+</svg>

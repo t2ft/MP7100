@@ -22,25 +22,23 @@
 #include <QTimerEvent>
 #include <QMessageBox>
 #include <QSettings>
-#include "dp700.h"
+#include "mp7100.h"
 
-#define InfoFlags (IdentificationReceived | VersionReceived)
-#define UpdateFlags (MeasuredVoltageReceived | MeasuredCurrentReceived | MeasuredPowerReceived | SetVoltageReceived | SetCurrentReceived | OnOffReceived | ErrorReceived )
-
-#define GRP_DP700           "DP700_Config"
+#define GRP_MP7100          "MP7100_Config"
 #define CFG_ALWAYS_ON_TOP   "alwaysOnTop"
-#define CFG_LOG_FONT_SIZE        "logFont"
+#define CFG_LOG_FONT_SIZE   "logFont"
 
 
 // expect a successful new measurement at least every second
-#define WATCHDOG_MS 2000
+#define UPDATE_MS   250
+#define WATCHDOG_MS 5000
 
 MainWidget::MainWidget(QWidget *parent)
     : TMainWidget(parent)
     , ui(new Ui::MainWidget)
     , m_lastCommandErrorRequest(false)
     , m_dev(nullptr)
-    , m_flags(0)
+    , m_state(Uninitialized)
     , m_idUpdateTimer(0)
     , m_idWatchdogTimer(0)
     , m_setOnOff(false)
@@ -52,7 +50,7 @@ MainWidget::MainWidget(QWidget *parent)
 {
     ui->setupUi(this);
     QSettings cfg;
-    cfg.beginGroup(GRP_DP700);
+    cfg.beginGroup(GRP_MP7100);
     ui->alwaysOnTop->setChecked(cfg.value(CFG_ALWAYS_ON_TOP, false).toBool());
     setWindowFlag(Qt::WindowStaysOnTopHint, ui->alwaysOnTop->isChecked());
     QFont f = ui->textMessage->document()->defaultFont();
@@ -74,14 +72,17 @@ MainWidget::MainWidget(QWidget *parent)
     // set custom widget fonts
     QFont fontLCD = QFont("LCDMono", 32);
     QFont fontLCDsmall = QFont("LCDMono2", 16);
+    QFont fontLCDtiny = QFont("LCDMono2", 10);
     ui->measuredVolts->setFont(fontLCD);
     ui->measuredAmps->setFont(fontLCD);
-    ui->measuredWatts->setFont(fontLCD);
     ui->setVolts->setFont(fontLCDsmall);
     ui->setAmps->setFont(fontLCDsmall);
+    ui->aux1Amps->setFont(fontLCDtiny);
+    ui->aux2Amps->setFont(fontLCDtiny);
     ui->setVolts->setStyleSheet("color:white;");
     ui->setAmps->setStyleSheet("color:white;");
-
+    ui->aux1Amps->setStyleSheet("color:white;");
+    ui->aux2Amps->setStyleSheet("color:white;");
     reconnectDevice();
 }
 
@@ -94,7 +95,7 @@ void MainWidget::startDevice()
         close();
     }
     // start regular operations
-    m_idUpdateTimer = startTimer(20, Qt::PreciseTimer);
+    m_idUpdateTimer = startTimer(UPDATE_MS, Qt::PreciseTimer);
     triggerWatchdog();
     // prevent uncontrolled power down
 }
@@ -104,7 +105,7 @@ MainWidget::~MainWidget()
     qDebug() << "MainWidget::~MainWidget()";
     // save log window font size to restore zoom level on next start
     QSettings cfg;
-    cfg.beginGroup(GRP_DP700);
+    cfg.beginGroup(GRP_MP7100);
     qreal s = ui->textMessage->document()->defaultFont().pointSizeF();
     cfg.setValue(CFG_LOG_FONT_SIZE, s);
     cfg.endGroup();
@@ -117,37 +118,48 @@ void MainWidget::timerEvent(QTimerEvent *event)
     if (event->timerId() == m_idUpdateTimer) {
 //        qDebug() << "+++ MainWidget::timerEvent() +++";
 //        qDebug() << "      flags =" << Qt::hex << m_flags;
-        if ((m_flags & InfoFlags) != InfoFlags) {
-            qDebug() << "      -> query info";
-            m_dev->queryInfo();
+        if (m_setOnOff) {
+            qInfo() << "      -> set on/off to" << (m_newOnOff ? "ON" : "OFF");
+            m_setOnOff = !m_dev->setOnOff(m_newOnOff);
+        } else if (m_setVA) {
+            qInfo() << "      -> set voltage to" << m_newVoltage << "V, current to" << m_newCurrent << "A";
+            m_setVA = !m_dev->setVoltageCurrent(m_newVoltage, m_newCurrent);
+            if (!m_setVA) {
+                m_setVoltageChanged = false;
+                m_setCurrentChanged = false;
+                ui->setVolts->setStyleSheet("color:white;");
+                ui->setAmps->setStyleSheet("color:white;");
+            }
         } else {
-            if ((m_flags & UpdateFlags) == 0) {
-                m_dev->measureAll();
-                qDebug() << "      -> measure all";
-            } else {
-                if (m_setOnOff) {
-                    qDebug() << "      -> set on/off to" << (m_newOnOff ? "ON" : "OFF");
-                    m_setOnOff = !m_dev->setOnOff(m_newOnOff);
-                } else if (m_setVA) {
-                    qDebug() << "      -> set voltage to" << m_newVoltage << "V, current to" << m_newCurrent << "A";
-                    m_setVA = !m_dev->setVoltageCurrent(m_newVoltage, m_newCurrent);
-                    if (!m_setVA) {
-                        m_setVoltageChanged = false;
-                        m_setCurrentChanged = false;
-                        ui->setVolts->setStyleSheet("color:white;");
-                        ui->setAmps->setStyleSheet("color:white;");
-                    }
-                } else {
-                    qDebug() << " start new measurement";
-                    m_flags &= ~UpdateFlags;
-                    updateIndicator(true);
-                    triggerWatchdog();
-                }
+            switch (m_state) {
+            case Uninitialized:
+                m_state = MinimumVoltageCurrentWaiting;
+                m_dev->getMinimumVoltageCurrent();
+                break;
+            case MinimumVoltageCurrentReceived:
+                m_state = MaximumVoltageCurrentWaiting;
+                m_dev->getMaximumVoltageCurrent();
+                break;
+            case MaximumVoltageCurrentReceived:
+            case SetVoltageCurrentReceived:
+                m_state = GetOnOffWaiting;
+                m_dev->getOnOff();
+                break;
+            case GetOnOffReceived:
+                m_state = DisplayVoltageCurrentWaiting;
+                m_dev->getDisplayVoltageCurrent();
+                break;
+            case DisplayVoltageCurrentReceived:
+                m_state = SetVoltageCurrentWaiting;
+                m_dev->getSetVoltageCurrent();
+                break;
+            default:
+                break;
             }
         }
 //        qDebug() << "--- MainWidget::timerEvent() ---";
     } else if (event->timerId() == m_idWatchdogTimer) {
-        if (m_flags) {
+        if (m_state!=Uninitialized) {
             qWarning() << "Watchdog Timeout!";
         }
         updateIndicator(false);
@@ -166,13 +178,13 @@ void MainWidget::on_messageAdded(const QString &msg)
     bool bold =  lineText.contains("send:");
     bool italics = lineText.contains("GUI:", Qt::CaseInsensitive);
     QString lineColor, tagColor;
-	
-	// format qDebug() generated lines
+
+    // format qDebug() generated lines
     if (lineText.contains("DBUG")) {
         // do not add debug lines
         return;
     } else if (lineText.contains("INFO")) {
-	// format qInfo() generated lines
+    // format qInfo() generated lines
         tagColor = bold ? "black" : "grey";
         lineColor = "black";
         if (lineText.contains("\'BE\'")) {
@@ -193,96 +205,103 @@ void MainWidget::on_messageAdded(const QString &msg)
             lineColor = "brown";
         }
     } else if (lineText.contains("WARN")) {
-	// format qWarning() generated lines
+    // format qWarning() generated lines
         tagColor = bold ? "mediumblue" : "royalblue";
         lineColor = "mediumblue";
         m_lastCommandErrorRequest = false;
     } else if (lineText.contains("CRIT")) {
-	// format qCritical() generated lines
+    // format qCritical() generated lines
         tagColor = bold ? "firebrick" : "indianred";
         lineColor = "firebrick";
         m_lastCommandErrorRequest = false;
     } else if (lineText.contains("FATL")) {
-	// format qFatal() generated lines
+    // format qFatal() generated lines
         tagColor = bold ? "darkviolet" : "blueviolet";
         lineColor = "darkviolet";
         m_lastCommandErrorRequest = false;
     } else {
-	// format all other lines
+    // format all other lines
         tagColor = bold ? "gray" : "darkgray";
         lineColor = "gray";
         m_lastCommandErrorRequest = false;
     }
-	// generate HTML code for this line
+    // generate HTML code for this line
     QString line = "<div><span style=\"color:" + tagColor + ";\">" + lineTag + "</span>" \
             "<span style=\"color:" + lineColor + ";font-weight:" + QString(bold ? "bold" : "regular") + ";\">" +
             QString(italics ? "<i>" : "") + lineText.toHtmlEscaped() + QString(italics ? "</i>" : "") + "</span></div>";
     ui->textMessage->appendHtml(line);
-	// ensure last line is visible
+    // ensure last line is visible
     cursor.movePosition(QTextCursor::End);
     cursor.movePosition(QTextCursor::StartOfLine);
     ui->textMessage->setTextCursor(cursor);
     ui->textMessage->ensureCursorVisible();
 }
 
-void MainWidget::setMeasuredVoltage(double x)
+void MainWidget::setDisplayVoltageCurrent(double u, double i, bool cc, bool ok)
 {
-    m_flags |= MeasuredVoltageReceived;
-    ui->measuredVolts->setText(QString("%1 V").arg(x, 5, 'f', 2, QLatin1Char('0')));
-}
-
-void MainWidget::setMeasuredCurrent(double x)
-{
-    m_flags |= MeasuredCurrentReceived;
-    ui->measuredAmps->setText(QString("%1 A").arg(x, 5, 'f', 2, QLatin1Char('0')));
-}
-
-void MainWidget::setMeasuredPower(double x)
-{
-    m_flags |= MeasuredPowerReceived;
-    ui->measuredWatts->setText(QString("%1 W").arg(x, 5, 'f', 2, QLatin1Char('0')));
-}
-
-void MainWidget::setVoltageSet(double x)
-{
-    m_flags |= SetVoltageReceived;
-    if (!m_setVoltageChanged)
-        SilentCall(ui->setVolts)->setValue(x);
-}
-
-void MainWidget::setCurrentSet(double x)
-{
-    m_flags |= SetCurrentReceived;
-    if (!m_setCurrentChanged)
-        SilentCall(ui->setAmps)->setValue(x);
-}
-
-void MainWidget::setOnOff(bool x)
-{
-    m_flags |= OnOffReceived;
-    if (!m_setOnOff) {
-        SilentCall(ui->onoff)->setChecked(x);
-        setOnOffText(x);
+    m_state = DisplayVoltageCurrentReceived;
+    if (ok) {
+        triggerWatchdog();
+        ui->measuredVolts->setText(QString("%1 V").arg(u, 5, 'f', 2, QLatin1Char('0')));
+        ui->measuredAmps->setText(QString("%1 A").arg(i, 5, 'f', 3, QLatin1Char('0')));
+        ui->CC_CV->setText(cc ? "CC" : "CV");
     }
 }
 
-void MainWidget::printIdentification(const QString &x)
+void MainWidget::setMinimumVoltageCurrent(double u, double i, bool ok)
 {
-    m_flags |= IdentificationReceived;
-    qInfo() << "Identification:" << x;
+    m_state = MinimumVoltageCurrentReceived;
+    if (ok) {
+        triggerWatchdog();
+        qInfo() << "minimum voltage:" << u << "V";
+        qInfo() << "minimum current:" << i << "A";
+        SilentCall(ui->setVolts)->setMinimum(u);
+        SilentCall(ui->setAmps)->setMinimum(u);
+    } else {
+        qWarning() << "minimum voltage: FAILED";
+        qWarning() << "minimum current: FAILED";
+    }
 }
 
-void MainWidget::printVersion(const QString &x)
+void MainWidget::setMaximumVoltageCurrent(double u, double i, bool ok)
 {
-    m_flags |= VersionReceived;
-    qInfo() << "Version:" << x;
+    m_state = MaximumVoltageCurrentReceived;
+    if (ok) {
+        triggerWatchdog();
+        qInfo() << "maximum voltage:" << u << "V";
+        qInfo() << "maximum current:" << i << "A";
+        SilentCall(ui->setVolts)->setMaximum(u);
+        SilentCall(ui->setAmps)->setMaximum(i);
+    } else {
+        qWarning() << "maximum voltage: FAILED";
+        qWarning() << "maximum current: FAILED";
+    }
 }
 
-void MainWidget::printError(const QString &x)
+void MainWidget::setVoltageCurrentSet(double u, double i, bool ok)
 {
-    m_flags |= ErrorReceived;
-    if (x!="0,\"No error\"")
-        qCritical() << "Error:" << x;
+    m_state = SetVoltageCurrentReceived;
+    if (ok) {
+        triggerWatchdog();
+        if (!m_setVoltageChanged) {
+            SilentCall(ui->setVolts)->setValue(u);
+        }
+        if (!m_setCurrentChanged) {
+            SilentCall(ui->setAmps)->setValue(i);
+        }
+    }
+}
+
+void MainWidget::setOnOff(bool on, bool ok)
+{
+    m_state = GetOnOffReceived;
+    if (ok) {
+        triggerWatchdog();
+        if (!m_setOnOff) {
+            SilentCall(ui->onoff)->setChecked(on);
+            setOnOffText(on);
+        }
+    }
 }
 
 void MainWidget::on_onoff_toggled(bool checked)
@@ -338,8 +357,10 @@ void MainWidget::setOnOffText(bool on)
 {
     ui->measuredAmps->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
     ui->measuredVolts->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
-    ui->measuredWatts->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
+    ui->CC_CV->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
     ui->onoff->setText(on ? tr("ON / off") : tr("on / OFF"));
+    QString name = on ? ":/res/power_on.svg" : ":/res/power_off.svg";
+    ui->output->load(name);
 }
 
 void MainWidget::reconnectDevice()
@@ -351,7 +372,7 @@ void MainWidget::reconnectDevice()
 void MainWidget::disconnectDevice()
 {
     delete m_dev;
-    m_flags = 0;
+    m_state = Uninitialized;
     killTimer(m_idUpdateTimer);
     m_idUpdateTimer = 0;
     killTimer(m_idWatchdogTimer);
@@ -360,17 +381,12 @@ void MainWidget::disconnectDevice()
 
 void MainWidget::connectDevice()
 {
-    m_dev = new DP700(this);
-    connect(m_dev, &DP700::measuredVoltage, this, &MainWidget::setMeasuredVoltage);
-    connect(m_dev, &DP700::measuredCurrent, this, &MainWidget::setMeasuredCurrent);
-    connect(m_dev, &DP700::measuredPower, this, &MainWidget::setMeasuredPower);
-    connect(m_dev, &DP700::voltageSet, this, &MainWidget::setVoltageSet);
-    connect(m_dev, &DP700::currentSet, this, &MainWidget::setCurrentSet);
-    connect(m_dev, &DP700::onoff, this, &MainWidget::setOnOff);
-    connect(m_dev, &DP700::idn, this, &MainWidget::printIdentification);
-    connect(m_dev, &DP700::version, this, &MainWidget::printVersion);
-    connect(m_dev, &DP700::error, this, &MainWidget::printError);
-
+    m_dev = new MP7100(this);
+    connect(m_dev, &MP7100::displayVoltageCurrentGet, this, &MainWidget::setDisplayVoltageCurrent);
+    connect(m_dev, &MP7100::minimumVoltageCurrentGet, this, &MainWidget::setMinimumVoltageCurrent);
+    connect(m_dev, &MP7100::maximumVoltageCurrentGet, this, &MainWidget::setMaximumVoltageCurrent);
+    connect(m_dev, &MP7100::setVoltageCurrentGet, this, &MainWidget::setVoltageCurrentSet);
+    connect(m_dev, &MP7100::onoffGet, this, &MainWidget::setOnOff);
     QTimer::singleShot(250, this, &MainWidget::startDevice);
 }
 
@@ -387,7 +403,7 @@ void MainWidget::on_alwaysOnTop_toggled(bool checked)
 {
     qDebug() << "always on top =" << checked;
     QSettings cfg;
-    cfg.beginGroup(GRP_DP700);
+    cfg.beginGroup(GRP_MP7100);
     cfg.setValue(CFG_ALWAYS_ON_TOP, checked);
     cfg.endGroup();
     setWindowFlag(Qt::WindowStaysOnTopHint, checked);

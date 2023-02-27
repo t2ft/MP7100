@@ -1,5 +1,5 @@
 // ***************************************************************************
-// DP700 power supply serial control tool
+// MP7100xx power supply serial control tool
 // ---------------------------------------------------------------------------
 // main.cpp
 // main application entry point
@@ -8,7 +8,7 @@
 // Waldstrasse 15, 86399 Bobingen, Germany
 // thomas@t2ft.de
 // ---------------------------------------------------------------------------
-// 2022-08-18  tt  Initial version created
+// 2023-02-27  tt  Initial version created
 // ***************************************************************************
 #include "mainwidget.h"
 #include "tapp.h"

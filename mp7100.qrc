@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>res/LCDM2B__.TTF</file>
         <file>res/LCDMB___.TTF</file>
+        <file>res/power_off.svg</file>
+        <file>res/power_on.svg</file>
     </qresource>
 </RCC>

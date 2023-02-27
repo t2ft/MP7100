@@ -1,8 +1,8 @@
 // ***************************************************************************
-// <project description>
+// General Support Classes
 // ---------------------------------------------------------------------------
 // tpowereventfilter.h
-// <file description>
+// event filter for Microsoft Windows (R) power state messages, header file
 // ---------------------------------------------------------------------------
 // Copyright (C) 2023 by t2ft - Thomas Thanner
 // Waldstrasse 15, 86399 Bobingen, Germany

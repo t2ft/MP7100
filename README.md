@@ -1,5 +1,5 @@
 # DP700
-Simple control tool to a Rigol DP712 power supply attached to COM1
+Simple control tool to a Multicomp MP7100xx power supply attached to COMxx
 
 Intended to be a much simpler and faster replacement for the tools provided by Rigol
 

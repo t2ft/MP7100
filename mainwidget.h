@@ -19,7 +19,7 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWidget; }
 QT_END_NAMESPACE
 
-class DP700;
+class MP7100;
 
 class MainWidget : public TMainWidget
 {
@@ -36,15 +36,11 @@ protected:
 private slots:
     void startDevice();
     void on_messageAdded(const QString &msg);
-    void setMeasuredVoltage(double x);
-    void setMeasuredCurrent(double x);
-    void setMeasuredPower(double x);
-    void setVoltageSet(double x);
-    void setCurrentSet(double x);
-    void setOnOff(bool x);
-    void printIdentification(const QString &x);
-    void printVersion(const QString &x);
-    void printError(const QString &x);
+    void setDisplayVoltageCurrent(double u, double i, bool cc, bool ok);
+    void setMinimumVoltageCurrent(double u, double i, bool ok);
+    void setMaximumVoltageCurrent(double u, double i, bool ok);
+    void setVoltageCurrentSet(double u, double i, bool ok);
+    void setOnOff(bool on, bool ok);
     void onSuspend();
     void onResume();
 
@@ -61,16 +57,18 @@ private:
     Ui::MainWidget *ui;
 
     typedef enum {
-        IdentificationReceived  = 0x00000001,
-        VersionReceived         = 0x00000002,
-        MeasuredVoltageReceived = 0x00000004,
-        MeasuredCurrentReceived = 0x00000008,
-        MeasuredPowerReceived   = 0x00000010,
-        SetVoltageReceived      = 0x00000020,
-        SetCurrentReceived      = 0x00000040,
-        OnOffReceived           = 0x00000080,
-        ErrorReceived           = 0x00000100,
-    } MessageFlags;
+        Uninitialized,
+        MinimumVoltageCurrentWaiting,
+        MinimumVoltageCurrentReceived,
+        MaximumVoltageCurrentWaiting,
+        MaximumVoltageCurrentReceived,
+        DisplayVoltageCurrentWaiting,
+        DisplayVoltageCurrentReceived,
+        SetVoltageCurrentWaiting,
+        SetVoltageCurrentReceived,
+        GetOnOffWaiting,
+        GetOnOffReceived,
+    } State;
 
     void setOnOffText(bool on);
     void reconnectDevice();
@@ -79,8 +77,8 @@ private:
     void triggerWatchdog();
 
     bool            m_lastCommandErrorRequest;
-    DP700           *m_dev;
-    quint32         m_flags;
+    MP7100          *m_dev;
+    State           m_state;
     int             m_idUpdateTimer;
     int             m_idWatchdogTimer;
     bool            m_setOnOff;

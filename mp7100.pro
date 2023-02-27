@@ -1,4 +1,4 @@
-QT       += core gui serialport
+QT       += core gui serialport svg
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -10,11 +10,11 @@ CONFIG += c++11
 
 
 # application version
-VERSION = 1.0.0.5
+VERSION = 1.0.0.0
 QMAKE_TARGET_COMPANY = t2ft
 QMAKE_TARGET_PRODUCT = DP700
 QMAKE_TARGET_DESCRIPTION = t2ft DP700 control tool
-QMAKE_TARGET_COPYRIGHT = Copyright (C) 2022-2023 by t2ft - Thomas Thanner
+QMAKE_TARGET_COPYRIGHT = Copyright (C) 2023 by t2ft - Thomas Thanner
 
 # Define some preprocessor macros to get the infos in our application.
 DEFINES += APP_VERSION=\\\"$$VERSION\\\"
@@ -23,7 +23,7 @@ DEFINES += APP_NAME=\\\"$$QMAKE_TARGET_PRODUCT\\\"
 DEFINES += APP_DOMAIN=\\\"t2ft.de\\\"
 
 SOURCES += \
-    dp700.cpp \
+    mp7100.cpp \
     main.cpp \
     mainwidget.cpp \
     tmainwidget.cpp \
@@ -33,7 +33,7 @@ SOURCES += \
     tpowereventfilter.cpp
 
 HEADERS += \
-    dp700.h \
+    mp7100.h \
     mainwidget.h \
     tmainwidget.h \
     tmessagehandler.h \
@@ -54,4 +54,4 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 RESOURCES += \
-    dp700.qrc
+    mp7100.qrc
