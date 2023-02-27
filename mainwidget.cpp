@@ -72,17 +72,13 @@ MainWidget::MainWidget(QWidget *parent)
     // set custom widget fonts
     QFont fontLCD = QFont("LCDMono", 32);
     QFont fontLCDsmall = QFont("LCDMono2", 16);
-    QFont fontLCDtiny = QFont("LCDMono2", 10);
     ui->measuredVolts->setFont(fontLCD);
     ui->measuredAmps->setFont(fontLCD);
     ui->setVolts->setFont(fontLCDsmall);
     ui->setAmps->setFont(fontLCDsmall);
-    ui->aux1Amps->setFont(fontLCDtiny);
-    ui->aux2Amps->setFont(fontLCDtiny);
     ui->setVolts->setStyleSheet("color:white;");
     ui->setAmps->setStyleSheet("color:white;");
-    ui->aux1Amps->setStyleSheet("color:white;");
-    ui->aux2Amps->setStyleSheet("color:white;");
+    ui->CC_CV->setFont(fontLCDsmall);
     reconnectDevice();
 }
 
