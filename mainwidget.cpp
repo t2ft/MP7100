@@ -30,8 +30,8 @@
 
 
 // expect a successful new measurement at least every second
-#define UPDATE_MS   250
-#define WATCHDOG_MS 5000
+#define UPDATE_MS   300
+#define WATCHDOG_MS 2000
 
 MainWidget::MainWidget(QWidget *parent)
     : TMainWidget(parent)
@@ -238,8 +238,8 @@ void MainWidget::setDisplayVoltageCurrent(double u, double i, bool cc, bool ok)
     m_state = DisplayVoltageCurrentReceived;
     if (ok) {
         triggerWatchdog();
-        ui->measuredVolts->setText(QString("%1 V").arg(u, 5, 'f', 2, QLatin1Char('0')));
-        ui->measuredAmps->setText(QString("%1 A").arg(i, 5, 'f', 3, QLatin1Char('0')));
+        ui->measuredVolts->setText(QString("%1 V").arg(u, 5, 'f', 2));
+        ui->measuredAmps->setText(QString("%1 A").arg(i, 5, 'f', 3));
         ui->CC_CV->setText(cc ? "CC" : "CV");
     }
 }
@@ -351,9 +351,9 @@ void MainWidget::updateIndicator(bool connected)
 
 void MainWidget::setOnOffText(bool on)
 {
-    ui->measuredAmps->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
-    ui->measuredVolts->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
-    ui->CC_CV->setStyleSheet(on ? "color:yellow" : "color:darkgrey");
+    ui->measuredAmps->setStyleSheet(on ? "color:white" : "color:darkgrey");
+    ui->measuredVolts->setStyleSheet(on ? "color:white" : "color:darkgrey");
+    ui->CC_CV->setStyleSheet(on ? "color:white" : "color:darkgrey");
     ui->onoff->setText(on ? tr("ON / off") : tr("on / OFF"));
     QString name = on ? ":/res/power_on.svg" : ":/res/power_off.svg";
     ui->output->load(name);
@@ -392,6 +392,7 @@ void MainWidget::triggerWatchdog()
     killTimer(m_idWatchdogTimer);
     qDebug() << "   -> trigger watchdog";
     m_idWatchdogTimer = startTimer(WATCHDOG_MS);
+    updateIndicator(true);
 }
 
 
