@@ -76,8 +76,8 @@ MainWidget::MainWidget(QWidget *parent)
     ui->measuredAmps->setFont(fontLCD);
     ui->setVolts->setFont(fontLCDsmall);
     ui->setAmps->setFont(fontLCDsmall);
-    ui->setVolts->setStyleSheet("color:white;");
-    ui->setAmps->setStyleSheet("color:white;");
+    ui->setVolts->setStyleSheet("color:black;");
+    ui->setAmps->setStyleSheet("color:black;");
     ui->CC_CV->setFont(fontLCDsmall);
     reconnectDevice();
 }
@@ -115,16 +115,16 @@ void MainWidget::timerEvent(QTimerEvent *event)
 //        qDebug() << "+++ MainWidget::timerEvent() +++";
 //        qDebug() << "      flags =" << Qt::hex << m_flags;
         if (m_setOnOff) {
-            qInfo() << "      -> set on/off to" << (m_newOnOff ? "ON" : "OFF");
+            qDebug() << "      -> set on/off to" << (m_newOnOff ? "ON" : "OFF");
             m_setOnOff = !m_dev->setOnOff(m_newOnOff);
         } else if (m_setVA) {
-            qInfo() << "      -> set voltage to" << m_newVoltage << "V, current to" << m_newCurrent << "A";
+            qDebug() << "      -> set voltage to" << m_newVoltage << "V, current to" << m_newCurrent << "A";
             m_setVA = !m_dev->setVoltageCurrent(m_newVoltage, m_newCurrent);
             if (!m_setVA) {
                 m_setVoltageChanged = false;
                 m_setCurrentChanged = false;
-                ui->setVolts->setStyleSheet("color:white;");
-                ui->setAmps->setStyleSheet("color:white;");
+                ui->setVolts->setStyleSheet("color:black;");
+                ui->setAmps->setStyleSheet("color:black;");
             }
         } else {
             switch (m_state) {
