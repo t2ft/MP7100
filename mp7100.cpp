@@ -77,8 +77,8 @@ void MP7100::decodeBuffer(QByteArray &buffer)
 
 void MP7100::decodeCommand(const QByteArray &buffer, bool timeout)
 {
-    qDebug() << "+++ MP7100::decodeCommand(buffer =" << buffer << ") +++";
-    qDebug() << "      m_state =" << m_state;
+//    qDebug() << "+++ MP7100::decodeCommand(buffer =" << buffer << ") +++";
+//    qDebug() << "      m_state =" << m_state;
     if (!buffer.isEmpty()) {
         QList<QByteArray> params;
 
@@ -267,8 +267,8 @@ void MP7100::timerEvent(QTimerEvent *event)
 
 bool MP7100::sendCommand(const QByteArray &cmd, STATE currentState, STATE newState)
 {
-    qDebug() << "+++ MP7100::sendCommand(cmd =" << cmd << "currentState =" << currentState << "newState =" << newState << ") +++";
-    qDebug() << "      m_state =" << m_state;
+//    qDebug() << "+++ MP7100::sendCommand(cmd =" << cmd << "currentState =" << currentState << "newState =" << newState << ") +++";
+//    qDebug() << "      m_state =" << m_state;
     QMutexLocker lock(&m_lock);
     if (m_idTimer!=0) {
         // stop current timeout
