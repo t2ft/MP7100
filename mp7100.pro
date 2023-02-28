@@ -10,10 +10,10 @@ CONFIG += c++11
 
 
 # application version
-VERSION = 1.0.0.0
+VERSION = 1.0.0.1
 QMAKE_TARGET_COMPANY = t2ft
-QMAKE_TARGET_PRODUCT = DP700
-QMAKE_TARGET_DESCRIPTION = t2ft DP700 control tool
+QMAKE_TARGET_PRODUCT = MP7100
+QMAKE_TARGET_DESCRIPTION = t2ft MP7100 control tool
 QMAKE_TARGET_COPYRIGHT = Copyright (C) 2023 by t2ft - Thomas Thanner
 
 # Define some preprocessor macros to get the infos in our application.
@@ -46,7 +46,7 @@ HEADERS += \
 FORMS += \
     mainwidget.ui
 
-RC_ICONS = res/t2ft_logo_04.ico
+RC_ICONS = res/mp7100_02.ico
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
